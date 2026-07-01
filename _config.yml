@@ -1,0 +1,5 @@
+title: 自动化测试博客
+description: 通过GitHub Actions自动部署到Pages
+baseurl: "/blog-demo"
+url: "https://Kenji116.github.io"
+theme: minima
