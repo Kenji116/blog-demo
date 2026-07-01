@@ -1,33 +1,42 @@
-name: Build & Deploy Blog to Pages
+name: Deploy Jekyll Blog to GitHub Pages
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      # 1.拉取代码
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2.配置Ruby 3.1（修复依赖冲突）
-      - name: Setup Ruby
-        uses: actions/setup-ruby@v1
+      # 配置Ruby，使用稳定3.2版本，增加缓存加速依赖安装
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.1"
+          ruby-version: '3.2'
+          bundler-cache: true
 
-      # 3.安装依赖
-      - name: Install dependencies
-        run: bundle install
+      # 构建Jekyll静态站点
+      - name: Build site with Jekyll
+        run: bundle exec jekyll build
+        env:
+          JEKYLL_ENV: production
 
-      # 4.构建静态网页
-      - name: Build static site
-        run: bundle exec jekyll build --destination _site
+      # 上传打包好的网页产物
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
 
-      # 5.部署到gh-pages分支
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
+        id: deployment
+        uses: actions/deploy-pages@v4
